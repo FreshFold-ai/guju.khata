@@ -7,6 +7,8 @@ function App() {
   const [scrollAccumulator, setScrollAccumulator] = useState(0)
   const [mainTitleKey, setMainTitleKey] = useState(0)
   const [subTitleKey, setSubTitleKey] = useState(0)
+  const [currencyIndex, setCurrencyIndex] = useState(0)
+  const [currencySelectorActive, setCurrencySelectorActive] = useState(false)
   const prevMainTitle = useRef('')
   const prevSubTitle = useRef('')
 
@@ -32,8 +34,19 @@ function App() {
     'Residential - Multi       ',
   ]
 
-  const currentMainTitle = titles[colorIndex].split(' - ')[0]
-  const currentSubTitle = titles[colorIndex].split(' - ')[1]
+  const currencies = [
+    { symbol: '$', code: 'USD' },
+    { symbol: '€', code: 'EUR' },
+    { symbol: '£', code: 'GBP' },
+    { symbol: '¥', code: 'JPY' },
+    { symbol: '₹', code: 'INR' },
+    { symbol: '₽', code: 'RUB' },
+    { symbol: '₩', code: 'KRW' },
+    { symbol: '₪', code: 'ILS' }
+  ]
+
+  const currentMainTitle = titles[colorIndex].split(' - ')[0].trim()
+  const currentSubTitle = titles[colorIndex].split(' - ')[1].trim()
 
   useEffect(() => {
     // Update animation keys only when text actually changes
@@ -48,6 +61,28 @@ function App() {
   }, [currentMainTitle, currentSubTitle])
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (currencySelectorActive && (e.key === 'Enter' || e.key === 'Escape')) {
+        setCurrencySelectorActive(false)
+      }
+    }
+
+    const handleClick = (e) => {
+      if (currencySelectorActive && !e.target.closest('.currency-selector')) {
+        setCurrencySelectorActive(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('click', handleClick)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('click', handleClick)
+    }
+  }, [currencySelectorActive])
+
+  useEffect(() => {
     const handleWheel = (e) => {
       e.preventDefault()
       
@@ -55,21 +90,32 @@ function App() {
       const newAccumulator = scrollAccumulator + e.deltaY
       setScrollAccumulator(newAccumulator)
       
-      // Threshold for color change (adjust for sensitivity)
+      // Threshold for change
       const threshold = 100
       
       if (Math.abs(newAccumulator) >= threshold) {
         const direction = newAccumulator > 0 ? 1 : -1
-        let newIndex = colorIndex + direction
         
-        // Loop around
-        if (newIndex >= colors.length) {
-          newIndex = 0
-        } else if (newIndex < 0) {
-          newIndex = colors.length - 1
+        if (currencySelectorActive) {
+          // Scroll through currencies
+          let newIndex = currencyIndex + direction
+          if (newIndex >= currencies.length) {
+            newIndex = 0
+          } else if (newIndex < 0) {
+            newIndex = currencies.length - 1
+          }
+          setCurrencyIndex(newIndex)
+        } else {
+          // Scroll through colors/pages
+          let newIndex = colorIndex + direction
+          if (newIndex >= colors.length) {
+            newIndex = 0
+          } else if (newIndex < 0) {
+            newIndex = colors.length - 1
+          }
+          setColorIndex(newIndex)
         }
         
-        setColorIndex(newIndex)
         setScrollAccumulator(0)
       }
     }
@@ -79,10 +125,20 @@ function App() {
     return () => {
       window.removeEventListener('wheel', handleWheel)
     }
-  }, [scrollAccumulator, colorIndex, colors.length])
+  }, [scrollAccumulator, colorIndex, colors.length, currencySelectorActive, currencyIndex, currencies.length])
 
   return (
     <div className="app" style={{ backgroundColor: colors[colorIndex] }}>
+      <div 
+        className={`currency-selector ${currencySelectorActive ? 'active' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          setCurrencySelectorActive(!currencySelectorActive)
+        }}
+      >
+        <span className="currency-symbol">{currencies[currencyIndex].symbol}</span>
+        {currencySelectorActive && <span className="currency-code">{currencies[currencyIndex].code}</span>}
+      </div>
       <div className="top-section">
         <div className="page-title">
           <span className="title-main">
