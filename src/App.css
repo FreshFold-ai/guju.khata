@@ -12,13 +12,13 @@
   position: absolute;
   bottom: 2rem;
   right: 2rem;
-  color: white;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 1.5rem;
   font-weight: 300;
   cursor: pointer;
   user-select: none;
   z-index: 100;
-  transition: all 0.3s ease;
+  transition: color 0.4s ease, text-shadow 0.4s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,10 +27,11 @@
 }
 
 .currency-selector:hover {
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .currency-selector.active {
+  color: white;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.4);
 }
 
