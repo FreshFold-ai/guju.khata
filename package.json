@@ -1,0 +1,22 @@
+{
+  "name": "guju.khata",
+  "version": "1.0.0",
+  "description": "Keep track of all your financials, from investments, real estate, commodities, fixed income, debts, bills, income, etc. The more information you provide, the more holistic the output in the home page. All data is saved through the browser (like cookieclicker).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.2",
+    "vite": "^7.2.7"
+  }
+}
