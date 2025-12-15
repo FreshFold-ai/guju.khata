@@ -1,6 +1,6 @@
 # 📒 Guju Khata - Personal Financial Ledger
 
-Keep track of all your financials, from investments, real estate, commodities, fixed income, debts, bills, income, etc. The more information you provide, the more holistic the output in the home page. All data is saved through the browser (like cookieclicker).
+Keep track of all your real estate. The more information you provide, the more holistic the output in the home page. All data is saved through the browser (you must use cookies or import export as txt file).
 
 ## Features
 
