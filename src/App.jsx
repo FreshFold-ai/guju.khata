@@ -9,8 +9,15 @@ function App() {
   const [subTitleKey, setSubTitleKey] = useState(0)
   const [currencyIndex, setCurrencyIndex] = useState(0)
   const [currencySelectorActive, setCurrencySelectorActive] = useState(false)
+  const [exchangeRates, setExchangeRates] = useState(null)
+  const [userName, setUserName] = useState('')
+  const [isFirstVisit, setIsFirstVisit] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
   const prevMainTitle = useRef('')
   const prevSubTitle = useRef('')
+
+  const API_KEY = import.meta.env.VITE_CURRENCY_API_KEY
+  const CACHE_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
 
   const colors = [
     '#6B4E4E', // Soft Dusty Rose
@@ -47,6 +54,100 @@ function App() {
 
   const currentMainTitle = titles[colorIndex].split(' - ')[0].trim()
   const currentSubTitle = titles[colorIndex].split(' - ')[1].trim()
+
+  // Convert amount between currencies
+  const convertCurrency = (amount, fromCurrency, toCurrency) => {
+    if (!exchangeRates) return amount
+    
+    const currencyCodeMap = {
+      'USD': 'USD',
+      'EUR': 'EUR',
+      'GBP': 'GBP',
+      'JPY': 'JPY',
+      'INR': 'INR',
+      'RUB': 'RUB',
+      'KRW': 'KRW',
+      'ILS': 'ILS'
+    }
+    
+    const fromCode = currencyCodeMap[fromCurrency]
+    const toCode = currencyCodeMap[toCurrency]
+    
+    if (!fromCode || !toCode || !exchangeRates[fromCode] || !exchangeRates[toCode]) {
+      return amount
+    }
+    
+    // Convert to USD first (base currency), then to target currency
+    const amountInUSD = amount / exchangeRates[fromCode]
+    const convertedAmount = amountInUSD * exchangeRates[toCode]
+    
+    return convertedAmount
+  }
+
+  const handleNameInput = (e) => {
+    if (e.key === 'Enter' && isEditingName && text.trim()) {
+      localStorage.setItem('user-name', text.trim())
+      setUserName(text.trim())
+      setIsEditingName(false)
+      setIsFirstVisit(false)
+      setText('')
+    }
+  }
+
+  // Fetch exchange rates with caching
+  const fetchExchangeRates = async () => {
+    try {
+      const response = await fetch(`https://api.freecurrencyapi.com/v1/latest?apikey=${API_KEY}`)
+      const data = await response.json()
+      
+      const ratesData = {
+        rates: data.data,
+        timestamp: Date.now()
+      }
+      
+      // Store in localStorage
+      localStorage.setItem('currency-rates', JSON.stringify(ratesData))
+      setExchangeRates(data.data)
+      
+      return data.data
+    } catch (error) {
+      console.error('Error fetching exchange rates:', error)
+      return null
+    }
+  }
+
+  // Load exchange rates on mount
+  useEffect(() => {
+    // Check for first visit
+    const storedName = localStorage.getItem('user-name')
+    if (storedName) {
+      setUserName(storedName)
+    } else {
+      setIsFirstVisit(true)
+      setIsEditingName(true)
+    }
+
+    const loadExchangeRates = async () => {
+      // Check localStorage first
+      const cached = localStorage.getItem('currency-rates')
+      
+      if (cached) {
+        const { rates, timestamp } = JSON.parse(cached)
+        const now = Date.now()
+        
+        // Check if cache is still valid (less than 1 hour old)
+        if (now - timestamp < CACHE_DURATION) {
+          setExchangeRates(rates)
+          return
+        }
+      }
+      
+      // Cache is invalid or doesn't exist, fetch new data
+      await fetchExchangeRates()
+    }
+    
+    loadExchangeRates()
+  }, [])
 
   useEffect(() => {
     // Update animation keys only when text actually changes
@@ -129,6 +230,17 @@ function App() {
 
   return (
     <div className="app" style={{ backgroundColor: colors[colorIndex] }}>
+      {userName && (
+        <div 
+          className={`name-display ${isEditingName ? 'active' : ''}`}
+          onClick={() => {
+            setIsEditingName(true)
+            setText(userName)
+          }}
+        >
+          {userName}
+        </div>
+      )}
       <div 
         className={`currency-selector ${currencySelectorActive ? 'active' : ''}`}
         onClick={(e) => {
@@ -154,10 +266,16 @@ function App() {
           className="invisible-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleNameInput}
           placeholder=""
           autoFocus
         />
       </div>
+      {isFirstVisit && (
+        <div className="name-prompt-text">
+          What's your name?
+        </div>
+      )}
       <div className="bottom-section">
         <div className="reflection">
           <input
